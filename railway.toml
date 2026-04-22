@@ -1,0 +1,40 @@
+[build]
+builder = "DOCKERFILE"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "npm start"
+healthcheckPath = "/api/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
+
+[[services.variables]]
+name = "APP_ID"
+description = "OAuth Application ID (any unique string, e.g. 'my-ecommerce-app')"
+required = true
+
+[[services.variables]]
+name = "APP_SECRET"
+description = "JWT signing secret — use a long random string (min 32 chars)"
+required = true
+
+[[services.variables]]
+name = "DATABASE_URL"
+description = "MySQL connection string: mysql://user:pass@host:port/dbname"
+required = true
+
+[[services.variables]]
+name = "KIMI_AUTH_URL"
+description = "Kimi OAuth server base URL (e.g. https://auth.kimi.moonshot.cn)"
+required = false
+
+[[services.variables]]
+name = "KIMI_OPEN_URL"
+description = "Kimi Open Platform base URL (e.g. https://api.moonshot.cn)"
+required = false
+
+[[services.variables]]
+name = "OWNER_UNION_ID"
+description = "Union ID of the admin user (gets 'admin' role on first login)"
+required = false
