@@ -9,7 +9,11 @@ type App = Hono<{ Bindings: HttpBindings }>;
 export function serveStaticFiles(app: App) {
   const distPath = path.resolve(import.meta.dirname, "../dist/public");
 
+  // Serve built JS/CSS assets
   app.use("*", serveStatic({ root: "./dist/public" }));
+
+  // Serve original public/ folder (images, favicon, products.json, etc.)
+  app.use("*", serveStatic({ root: "./public" }));
 
   app.notFound((c) => {
     const accept = c.req.header("accept") ?? "";

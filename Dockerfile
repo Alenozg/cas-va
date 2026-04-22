@@ -1,19 +1,13 @@
-FROM node:20-alpine AS base
+FROM node:20-alpine
 WORKDIR /app
 
-FROM base AS deps
+# Install production dependencies
 COPY package.json package-lock.json ./
-RUN npm ci --no-audit
+RUN npm ci --omit=dev --no-audit
 
-FROM deps AS build
-COPY . .
-RUN npm run build
-
-FROM node:20-alpine AS production
-WORKDIR /app
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=build /app/dist ./dist
-COPY package.json ./
+# Copy pre-built dist and source assets
+COPY dist ./dist
+COPY public ./public
 
 EXPOSE 3000
 CMD ["npm", "start"]
