@@ -1,10 +1,7 @@
 import { useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Link, useNavigate } from "react-router";
 import { trpc } from "@/providers/trpc";
-import { useNavigate } from "react-router";
+import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 type Mode = "login" | "register";
 
@@ -14,25 +11,18 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
 
   const utils = trpc.useUtils();
 
-  const loginMutation = trpc.auth.login.useMutation({
-    onSuccess: async () => {
-      await utils.auth.me.invalidate();
-      navigate("/");
-    },
-    onError: (e) => setError(e.message),
-  });
+  const onSuccess = async () => {
+    await utils.auth.me.invalidate();
+    navigate("/");
+  };
 
-  const registerMutation = trpc.auth.register.useMutation({
-    onSuccess: async () => {
-      await utils.auth.me.invalidate();
-      navigate("/");
-    },
-    onError: (e) => setError(e.message),
-  });
+  const loginMutation = trpc.auth.login.useMutation({ onSuccess, onError: (e) => setError(e.message) });
+  const registerMutation = trpc.auth.register.useMutation({ onSuccess, onError: (e) => setError(e.message) });
 
   const isPending = loginMutation.isPending || registerMutation.isPending;
 
@@ -47,100 +37,133 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
-      <Card className="w-full max-w-sm shadow-lg">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl">
-            {mode === "login" ? "Giriş Yap" : "Kayıt Ol"}
-          </CardTitle>
-          <CardDescription>
-            {mode === "login"
-              ? "Hesabınıza giriş yapın"
-              : "Yeni hesap oluşturun"}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Üst bar */}
+      <div className="px-4 py-4 flex items-center">
+        <Link to="/" className="flex items-center gap-2 text-sm text-gray-500 hover:text-black transition-colors">
+          <ArrowLeft size={16} /> Ana Sayfaya Dön
+        </Link>
+        <Link to="/" className="absolute left-1/2 -translate-x-1/2">
+          <span className="text-2xl font-semibold" style={{ fontFamily: "'Playfair Display', serif" }}>Casiva</span>
+        </Link>
+      </div>
+
+      {/* Form alanı */}
+      <div className="flex-1 flex items-center justify-center px-4 py-8">
+        <div className="w-full max-w-sm">
+          {/* Başlık */}
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold mb-2">
+              {mode === "login" ? "Hoş Geldiniz" : "Hesap Oluştur"}
+            </h1>
+            <p className="text-gray-500 text-sm">
+              {mode === "login"
+                ? "Hesabınıza giriş yapın"
+                : "Birkaç saniyede kayıt olun"}
+            </p>
+          </div>
+
+          {/* Tab seçimi */}
+          <div className="flex bg-gray-100 rounded-2xl p-1 mb-6">
+            <button
+              onClick={() => { setMode("login"); setError(""); }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === "login" ? "bg-white shadow-sm text-black" : "text-gray-500"}`}
+            >
+              Giriş Yap
+            </button>
+            <button
+              onClick={() => { setMode("register"); setError(""); }}
+              className={`flex-1 py-2.5 rounded-xl text-sm font-semibold transition-all ${mode === "register" ? "bg-white shadow-sm text-black" : "text-gray-500"}`}
+            >
+              Kayıt Ol
+            </button>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="space-y-4">
             {mode === "register" && (
-              <div className="flex flex-col gap-1.5">
-                <Label htmlFor="name">Ad Soyad</Label>
-                <Input
-                  id="name"
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">Ad Soyad</label>
+                <input
                   type="text"
-                  placeholder="Ad Soyad"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  onChange={e => setName(e.target.value)}
+                  placeholder="Adınız Soyadınız"
                   required
                   autoComplete="name"
+                  className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-black focus:ring-2 focus:ring-black/5 transition-all bg-white"
                 />
               </div>
             )}
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">E-posta</label>
+              <input
                 type="email"
-                placeholder="ornek@email.com"
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={e => setEmail(e.target.value)}
+                placeholder="ornek@email.com"
                 required
                 autoComplete="email"
-              />
-            </div>
-            <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password">Şifre</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                autoComplete={mode === "login" ? "current-password" : "new-password"}
-                minLength={6}
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm outline-none focus:border-black focus:ring-2 focus:ring-black/5 transition-all bg-white"
               />
             </div>
 
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Şifre</label>
+              <div className="relative">
+                <input
+                  type={showPass ? "text" : "password"}
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  placeholder="En az 6 karakter"
+                  required
+                  minLength={6}
+                  autoComplete={mode === "login" ? "current-password" : "new-password"}
+                  className="w-full px-4 py-3 pr-12 border border-gray-200 rounded-xl text-sm outline-none focus:border-black focus:ring-2 focus:ring-black/5 transition-all bg-white"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass(s => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 p-1"
+                >
+                  {showPass ? <EyeOff size={16} /> : <Eye size={16} />}
+                </button>
+              </div>
+            </div>
+
+            {/* Hata mesajı */}
             {error && (
-              <p className="text-sm text-red-500 text-center">{error}</p>
+              <div className="px-4 py-3 bg-red-50 border border-red-100 rounded-xl text-sm text-red-600 text-center">
+                {error}
+              </div>
             )}
 
-            <Button type="submit" className="w-full" disabled={isPending}>
-              {isPending
-                ? "Yükleniyor..."
-                : mode === "login"
-                ? "Giriş Yap"
-                : "Kayıt Ol"}
-            </Button>
-
-            <p className="text-sm text-center text-muted-foreground">
-              {mode === "login" ? (
-                <>
-                  Hesabın yok mu?{" "}
-                  <button
-                    type="button"
-                    className="underline text-foreground"
-                    onClick={() => { setMode("register"); setError(""); }}
-                  >
-                    Kayıt Ol
-                  </button>
-                </>
+            {/* Gönder butonu */}
+            <button
+              type="submit"
+              disabled={isPending}
+              className="w-full py-3.5 bg-black text-white text-sm font-bold rounded-xl hover:opacity-80 transition-opacity disabled:opacity-50 mt-2"
+            >
+              {isPending ? (
+                <span className="flex items-center justify-center gap-2">
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  {mode === "login" ? "Giriş yapılıyor..." : "Kayıt olunuyor..."}
+                </span>
               ) : (
-                <>
-                  Zaten hesabın var mı?{" "}
-                  <button
-                    type="button"
-                    className="underline text-foreground"
-                    onClick={() => { setMode("login"); setError(""); }}
-                  >
-                    Giriş Yap
-                  </button>
-                </>
+                mode === "login" ? "Giriş Yap" : "Kayıt Ol"
               )}
-            </p>
+            </button>
           </form>
-        </CardContent>
-      </Card>
+
+          {/* Alt bilgi */}
+          <p className="text-center text-xs text-gray-400 mt-6">
+            Devam ederek{" "}
+            <span className="underline cursor-pointer">Gizlilik Politikası</span>'nı ve{" "}
+            <span className="underline cursor-pointer">Kullanım Şartları</span>'nı kabul etmiş olursunuz.
+          </p>
+        </div>
+      </div>
     </div>
   );
 }
