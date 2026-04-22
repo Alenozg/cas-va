@@ -327,41 +327,41 @@ var require_lib = __commonJS({
     var isRecord = (value) => typeof value === "object" && value !== null && !Array.isArray(value);
     var isWordChar = (code) => code >= 65 && code <= 90 || code >= 97 && code <= 122 || code >= 48 && code <= 57 || code === 95;
     var isWhitespace = (code) => code === charCode.space || code === charCode.tab || code === charCode.newline || code === charCode.carriageReturn;
-    var hasOnlyWhitespaceBetween = (sql2, start, end) => {
+    var hasOnlyWhitespaceBetween = (sql3, start, end) => {
       if (start >= end)
         return true;
       for (let i = start; i < end; i++) {
-        const code = sql2.charCodeAt(i);
+        const code = sql3.charCodeAt(i);
         if (code !== charCode.space && code !== charCode.tab && code !== charCode.newline && code !== charCode.carriageReturn)
           return false;
       }
       return true;
     };
     var toLower = (code) => code | 32;
-    var matchesWord = (sql2, position, word, length) => {
+    var matchesWord = (sql3, position, word, length) => {
       for (let offset = 0; offset < word.length; offset++)
-        if (toLower(sql2.charCodeAt(position + offset)) !== word.charCodeAt(offset))
+        if (toLower(sql3.charCodeAt(position + offset)) !== word.charCodeAt(offset))
           return false;
-      return (position === 0 || !isWordChar(sql2.charCodeAt(position - 1))) && (position + word.length >= length || !isWordChar(sql2.charCodeAt(position + word.length)));
+      return (position === 0 || !isWordChar(sql3.charCodeAt(position - 1))) && (position + word.length >= length || !isWordChar(sql3.charCodeAt(position + word.length)));
     };
-    var skipSqlContext = (sql2, position) => {
-      const currentChar = sql2.charCodeAt(position);
-      const nextChar = sql2.charCodeAt(position + 1);
+    var skipSqlContext = (sql3, position) => {
+      const currentChar = sql3.charCodeAt(position);
+      const nextChar = sql3.charCodeAt(position + 1);
       if (currentChar === charCode.singleQuote) {
-        for (let cursor = position + 1; cursor < sql2.length; cursor++) {
-          if (sql2.charCodeAt(cursor) === charCode.backslash)
+        for (let cursor = position + 1; cursor < sql3.length; cursor++) {
+          if (sql3.charCodeAt(cursor) === charCode.backslash)
             cursor++;
-          else if (sql2.charCodeAt(cursor) === charCode.singleQuote)
+          else if (sql3.charCodeAt(cursor) === charCode.singleQuote)
             return cursor + 1;
         }
-        return sql2.length;
+        return sql3.length;
       }
       if (currentChar === charCode.backtick) {
-        const length = sql2.length;
+        const length = sql3.length;
         for (let cursor = position + 1; cursor < length; cursor++) {
-          if (sql2.charCodeAt(cursor) !== charCode.backtick)
+          if (sql3.charCodeAt(cursor) !== charCode.backtick)
             continue;
-          if (sql2.charCodeAt(cursor + 1) === charCode.backtick) {
+          if (sql3.charCodeAt(cursor + 1) === charCode.backtick) {
             cursor++;
             continue;
           }
@@ -370,48 +370,48 @@ var require_lib = __commonJS({
         return length;
       }
       if (currentChar === charCode.dash && nextChar === charCode.dash) {
-        const lineBreak = sql2.indexOf("\n", position + 2);
-        return lineBreak === -1 ? sql2.length : lineBreak + 1;
+        const lineBreak = sql3.indexOf("\n", position + 2);
+        return lineBreak === -1 ? sql3.length : lineBreak + 1;
       }
       if (currentChar === charCode.slash && nextChar === charCode.asterisk) {
-        const commentEnd = sql2.indexOf("*/", position + 2);
-        return commentEnd === -1 ? sql2.length : commentEnd + 2;
+        const commentEnd = sql3.indexOf("*/", position + 2);
+        return commentEnd === -1 ? sql3.length : commentEnd + 2;
       }
       return -1;
     };
-    var findNextPlaceholder = (sql2, start) => {
-      const sqlLength = sql2.length;
+    var findNextPlaceholder = (sql3, start) => {
+      const sqlLength = sql3.length;
       for (let position = start; position < sqlLength; position++) {
-        const code = sql2.charCodeAt(position);
+        const code = sql3.charCodeAt(position);
         if (code === charCode.questionMark)
           return position;
         if (code === charCode.singleQuote || code === charCode.backtick || code === charCode.dash || code === charCode.slash) {
-          const contextEnd = skipSqlContext(sql2, position);
+          const contextEnd = skipSqlContext(sql3, position);
           if (contextEnd !== -1)
             position = contextEnd - 1;
         }
       }
       return -1;
     };
-    var findSetKeyword = (sql2, startFrom = 0) => {
-      const length = sql2.length;
+    var findSetKeyword = (sql3, startFrom = 0) => {
+      const length = sql3.length;
       for (let position = startFrom; position < length; position++) {
-        const code = sql2.charCodeAt(position);
+        const code = sql3.charCodeAt(position);
         const lower = code | 32;
         if (code === charCode.singleQuote || code === charCode.backtick || code === charCode.dash || code === charCode.slash) {
-          const contextEnd = skipSqlContext(sql2, position);
+          const contextEnd = skipSqlContext(sql3, position);
           if (contextEnd !== -1) {
             position = contextEnd - 1;
             continue;
           }
         }
-        if (lower === 115 && matchesWord(sql2, position, "set", length))
+        if (lower === 115 && matchesWord(sql3, position, "set", length))
           return position + 3;
-        if (lower === 107 && matchesWord(sql2, position, "key", length)) {
+        if (lower === 107 && matchesWord(sql3, position, "key", length)) {
           let cursor = position + 3;
-          while (cursor < length && isWhitespace(sql2.charCodeAt(cursor)))
+          while (cursor < length && isWhitespace(sql3.charCodeAt(cursor)))
             cursor++;
-          if (matchesWord(sql2, cursor, "update", length))
+          if (matchesWord(sql3, cursor, "update", length))
             return cursor + 6;
         }
       }
@@ -506,19 +506,19 @@ var require_lib = __commonJS({
       const keysLength = keys.length;
       if (keysLength === 0)
         return "";
-      let sql2 = "";
+      let sql3 = "";
       for (let i = 0; i < keysLength; i++) {
         const key = keys[i];
         const value = object2[key];
         if (typeof value === "function")
           continue;
-        if (sql2.length > 0)
-          sql2 += ", ";
-        sql2 += (0, exports.escapeId)(key);
-        sql2 += " = ";
-        sql2 += (0, exports.escape)(value, true, timezone);
+        if (sql3.length > 0)
+          sql3 += ", ";
+        sql3 += (0, exports.escapeId)(key);
+        sql3 += " = ";
+        sql3 += (0, exports.escape)(value, true, timezone);
       }
-      return sql2;
+      return sql3;
     };
     exports.objectToValues = objectToValues;
     var bufferToString = (buffer) => `X${escapeString(buffer.toString("hex"))}`;
@@ -569,25 +569,25 @@ var require_lib = __commonJS({
       }
     };
     exports.escape = escape;
-    var format = (sql2, values, stringifyObjects, timezone) => {
+    var format = (sql3, values, stringifyObjects, timezone) => {
       if (values === void 0 || values === null)
-        return sql2;
+        return sql3;
       const valuesArray = Array.isArray(values) ? values : [values];
       const length = valuesArray.length;
       let setIndex = -2;
       let result = "";
       let chunkIndex = 0;
       let valuesIndex = 0;
-      let placeholderPosition = findNextPlaceholder(sql2, 0);
+      let placeholderPosition = findNextPlaceholder(sql3, 0);
       while (valuesIndex < length && placeholderPosition !== -1) {
         let placeholderEnd = placeholderPosition + 1;
         let escapedValue;
-        while (sql2.charCodeAt(placeholderEnd) === 63)
+        while (sql3.charCodeAt(placeholderEnd) === 63)
           placeholderEnd++;
         const placeholderLength = placeholderEnd - placeholderPosition;
         const currentValue = valuesArray[valuesIndex];
         if (placeholderLength > 2) {
-          placeholderPosition = findNextPlaceholder(sql2, placeholderEnd);
+          placeholderPosition = findNextPlaceholder(sql3, placeholderEnd);
           continue;
         }
         if (placeholderLength === 2)
@@ -596,32 +596,32 @@ var require_lib = __commonJS({
           escapedValue = `${currentValue}`;
         else if (typeof currentValue === "object" && currentValue !== null && !stringifyObjects) {
           if (setIndex === -2)
-            setIndex = findSetKeyword(sql2);
-          if (setIndex !== -1 && setIndex <= placeholderPosition && hasOnlyWhitespaceBetween(sql2, setIndex, placeholderPosition) && !hasSqlString(currentValue) && !Array.isArray(currentValue) && !node_buffer_1.Buffer.isBuffer(currentValue) && !(currentValue instanceof Uint8Array) && !isDate2(currentValue) && isRecord(currentValue)) {
+            setIndex = findSetKeyword(sql3);
+          if (setIndex !== -1 && setIndex <= placeholderPosition && hasOnlyWhitespaceBetween(sql3, setIndex, placeholderPosition) && !hasSqlString(currentValue) && !Array.isArray(currentValue) && !node_buffer_1.Buffer.isBuffer(currentValue) && !(currentValue instanceof Uint8Array) && !isDate2(currentValue) && isRecord(currentValue)) {
             escapedValue = (0, exports.objectToValues)(currentValue, timezone);
-            setIndex = findSetKeyword(sql2, placeholderEnd);
+            setIndex = findSetKeyword(sql3, placeholderEnd);
           } else
             escapedValue = (0, exports.escape)(currentValue, true, timezone);
         } else
           escapedValue = (0, exports.escape)(currentValue, stringifyObjects, timezone);
-        result += sql2.slice(chunkIndex, placeholderPosition);
+        result += sql3.slice(chunkIndex, placeholderPosition);
         result += escapedValue;
         chunkIndex = placeholderEnd;
         valuesIndex++;
-        placeholderPosition = findNextPlaceholder(sql2, placeholderEnd);
+        placeholderPosition = findNextPlaceholder(sql3, placeholderEnd);
       }
       if (chunkIndex === 0)
-        return sql2;
-      if (chunkIndex < sql2.length)
-        return result + sql2.slice(chunkIndex);
+        return sql3;
+      if (chunkIndex < sql3.length)
+        return result + sql3.slice(chunkIndex);
       return result;
     };
     exports.format = format;
-    var raw2 = (sql2) => {
-      if (typeof sql2 !== "string")
+    var raw2 = (sql3) => {
+      if (typeof sql3 !== "string")
         throw new TypeError("argument sql must be a string");
       return {
-        toSqlString: () => sql2
+        toSqlString: () => sql3
       };
     };
     exports.raw = raw2;
@@ -13507,8 +13507,8 @@ var require_prepare_statement = __commonJS({
     var StringParser = require_string();
     var CharsetToEncoding = require_charset_encodings();
     var PrepareStatement = class {
-      constructor(sql2, charsetNumber) {
-        this.query = sql2;
+      constructor(sql3, charsetNumber) {
+        this.query = sql3;
         this.charsetNumber = charsetNumber;
         this.encoding = CharsetToEncoding[charsetNumber];
       }
@@ -13557,8 +13557,8 @@ var require_query = __commonJS({
     var Types = require_types();
     var { toParameter } = require_encode_parameter();
     var Query = class {
-      constructor(sql2, charsetNumber, attributes, clientFlags) {
-        this.query = sql2;
+      constructor(sql3, charsetNumber, attributes, clientFlags) {
+        this.query = sql3;
         this.charsetNumber = charsetNumber;
         this.encoding = CharsetToEncoding[charsetNumber];
         this.attributes = attributes;
@@ -17608,17 +17608,17 @@ var require_connection = __commonJS({
         }
         return cmd;
       }
-      format(sql2, values) {
+      format(sql3, values) {
         if (typeof this.config.queryFormat === "function") {
           return this.config.queryFormat.call(
             this,
-            sql2,
+            sql3,
             values,
             this.config.timezone
           );
         }
         const opts = {
-          sql: sql2,
+          sql: sql3,
           values
         };
         this._resolveNamedPlaceholders(opts);
@@ -17635,8 +17635,8 @@ var require_connection = __commonJS({
       escapeId(value) {
         return SqlString.escapeId(value, false);
       }
-      raw(sql2) {
-        return SqlString.raw(sql2);
+      raw(sql3) {
+        return SqlString.raw(sql3);
       }
       _resolveNamedPlaceholders(options) {
         let unnamed;
@@ -17652,12 +17652,12 @@ var require_connection = __commonJS({
           options.values = unnamed[1];
         }
       }
-      query(sql2, values, cb) {
+      query(sql3, values, cb) {
         let cmdQuery;
-        if (sql2.constructor === Commands.Query) {
-          cmdQuery = sql2;
+        if (sql3.constructor === Commands.Query) {
+          cmdQuery = sql3;
         } else {
-          cmdQuery = _BaseConnection.createQuery(sql2, values, cb, this.config);
+          cmdQuery = _BaseConnection.createQuery(sql3, values, cb, this.config);
         }
         this._resolveNamedPlaceholders(cmdQuery);
         const rawSql = this.format(
@@ -17733,12 +17733,12 @@ var require_connection = __commonJS({
         }
         return this.addCommand(new Commands.Prepare(options, cb));
       }
-      unprepare(sql2) {
+      unprepare(sql3) {
         let options = {};
-        if (typeof sql2 === "object") {
-          options = sql2;
+        if (typeof sql3 === "object") {
+          options = sql3;
         } else {
-          options.sql = sql2;
+          options.sql = sql3;
         }
         const key = _BaseConnection.statementKey(options);
         const stmt = this._statements.get(key);
@@ -17748,16 +17748,16 @@ var require_connection = __commonJS({
         }
         return stmt;
       }
-      execute(sql2, values, cb) {
+      execute(sql3, values, cb) {
         let options = {
           infileStreamFactory: this.config.infileStreamFactory
         };
-        if (typeof sql2 === "object") {
+        if (typeof sql3 === "object") {
           options = {
             ...options,
-            ...sql2,
-            sql: sql2.sql,
-            values: sql2.values
+            ...sql3,
+            sql: sql3.sql,
+            values: sql3.values
           };
           if (typeof values === "function") {
             cb = values;
@@ -17766,10 +17766,10 @@ var require_connection = __commonJS({
           }
         } else if (typeof values === "function") {
           cb = values;
-          options.sql = sql2;
+          options.sql = sql3;
           options.values = void 0;
         } else {
-          options.sql = sql2;
+          options.sql = sql3;
           options.values = values;
         }
         this._resolveNamedPlaceholders(options);
@@ -18050,17 +18050,17 @@ var require_connection = __commonJS({
         this.addCommand = this._addCommandClosedState;
         return quitCmd;
       }
-      static createQuery(sql2, values, cb, config2) {
+      static createQuery(sql3, values, cb, config2) {
         let options = {
           rowsAsArray: config2.rowsAsArray,
           infileStreamFactory: config2.infileStreamFactory
         };
-        if (typeof sql2 === "object") {
+        if (typeof sql3 === "object") {
           options = {
             ...options,
-            ...sql2,
-            sql: sql2.sql,
-            values: sql2.values
+            ...sql3,
+            sql: sql3.sql,
+            values: sql3.values
           };
           if (typeof values === "function") {
             cb = values;
@@ -18069,10 +18069,10 @@ var require_connection = __commonJS({
           }
         } else if (typeof values === "function") {
           cb = values;
-          options.sql = sql2;
+          options.sql = sql3;
           options.values = void 0;
         } else {
-          options.sql = sql2;
+          options.sql = sql3;
           options.values = values;
         }
         return new Commands.Query(options, cb);
@@ -18703,9 +18703,9 @@ var require_pool = __commonJS({
           connection._realEnd(endCB);
         }
       }
-      query(sql2, values, cb) {
+      query(sql3, values, cb) {
         const cmdQuery = BaseConnection.createQuery(
-          sql2,
+          sql3,
           values,
           cb,
           this.config.connectionConfig
@@ -18749,7 +18749,7 @@ var require_pool = __commonJS({
         });
         return cmdQuery;
       }
-      execute(sql2, values, cb) {
+      execute(sql3, values, cb) {
         if (typeof values === "function") {
           cb = values;
           values = [];
@@ -18759,7 +18759,7 @@ var require_pool = __commonJS({
             return cb(err);
           }
           try {
-            conn.execute(sql2, values, (err2, rows, fields) => {
+            conn.execute(sql3, values, (err2, rows, fields) => {
               if (isReadOnlyError(err2)) {
                 conn.destroy();
               }
@@ -18796,9 +18796,9 @@ var require_pool = __commonJS({
           }
         }, 1e3);
       }
-      format(sql2, values) {
+      format(sql3, values) {
         return SqlString.format(
-          sql2,
+          sql3,
           values,
           this.config.connectionConfig.stringifyObjects,
           this.config.connectionConfig.timezone
@@ -18854,7 +18854,7 @@ var require_pool2 = __commonJS({
       releaseConnection(connection) {
         if (connection instanceof PromisePoolConnection) connection.release();
       }
-      query(sql2, args) {
+      query(sql3, args) {
         const corePool = this.pool;
         const stackHolder = captureStackHolder(_PromisePool.prototype.query);
         if (typeof args === "function") {
@@ -18865,13 +18865,13 @@ var require_pool2 = __commonJS({
         return new this.Promise((resolve, reject) => {
           const done = makeDoneCb(resolve, reject, stackHolder);
           if (args !== void 0) {
-            corePool.query(sql2, args, done);
+            corePool.query(sql3, args, done);
           } else {
-            corePool.query(sql2, done);
+            corePool.query(sql3, done);
           }
         });
       }
-      execute(sql2, args) {
+      execute(sql3, args) {
         const corePool = this.pool;
         const stackHolder = captureStackHolder(_PromisePool.prototype.execute);
         if (typeof args === "function") {
@@ -18882,9 +18882,9 @@ var require_pool2 = __commonJS({
         return new this.Promise((resolve, reject) => {
           const done = makeDoneCb(resolve, reject, stackHolder);
           if (args) {
-            corePool.execute(sql2, args, done);
+            corePool.execute(sql3, args, done);
           } else {
-            corePool.execute(sql2, done);
+            corePool.execute(sql3, done);
           }
         });
       }
@@ -19040,8 +19040,8 @@ var require_pool_cluster = __commonJS({
        * @param {*} cb
        * @returns query
        */
-      query(sql2, values, cb) {
-        const query = Connection.createQuery(sql2, values, cb, {});
+      query(sql3, values, cb) {
+        const query = Connection.createQuery(sql3, values, cb, {});
         this.getConnection((err, conn) => {
           if (err) {
             if (typeof query.onResult === "function") {
@@ -19068,7 +19068,7 @@ var require_pool_cluster = __commonJS({
        * @param {*} values
        * @param {*} cb
        */
-      execute(sql2, values, cb) {
+      execute(sql3, values, cb) {
         if (typeof values === "function") {
           cb = values;
           values = [];
@@ -19078,7 +19078,7 @@ var require_pool_cluster = __commonJS({
             return cb(err);
           }
           try {
-            conn.execute(sql2, values, cb).once("end", () => {
+            conn.execute(sql3, values, cb).once("end", () => {
               conn.release();
             });
           } catch (e) {
@@ -19374,7 +19374,7 @@ var require_pool_cluster2 = __commonJS({
           });
         });
       }
-      query(sql2, values) {
+      query(sql3, values) {
         const corePoolNamespace = this.poolNamespace;
         const stackHolder = captureStackHolder(
           _PromisePoolNamespace.prototype.query
@@ -19386,10 +19386,10 @@ var require_pool_cluster2 = __commonJS({
         }
         return new this.Promise((resolve, reject) => {
           const done = makeDoneCb(resolve, reject, stackHolder);
-          corePoolNamespace.query(sql2, values, done);
+          corePoolNamespace.query(sql3, values, done);
         });
       }
-      execute(sql2, values) {
+      execute(sql3, values) {
         const corePoolNamespace = this.poolNamespace;
         const stackHolder = captureStackHolder(
           _PromisePoolNamespace.prototype.execute
@@ -19401,7 +19401,7 @@ var require_pool_cluster2 = __commonJS({
         }
         return new this.Promise((resolve, reject) => {
           const done = makeDoneCb(resolve, reject, stackHolder);
-          corePoolNamespace.execute(sql2, values, done);
+          corePoolNamespace.execute(sql3, values, done);
         });
       }
     };
@@ -19482,7 +19482,7 @@ var require_promise = __commonJS({
           );
         });
       }
-      query(sql2, args) {
+      query(sql3, args) {
         const corePoolCluster = this.poolCluster;
         const stackHolder = captureStackHolder(_PromisePoolCluster.prototype.query);
         if (typeof args === "function") {
@@ -19492,10 +19492,10 @@ var require_promise = __commonJS({
         }
         return new this.Promise((resolve, reject) => {
           const done = makeDoneCb(resolve, reject, stackHolder);
-          corePoolCluster.query(sql2, args, done);
+          corePoolCluster.query(sql3, args, done);
         });
       }
-      execute(sql2, args) {
+      execute(sql3, args) {
         const corePoolCluster = this.poolCluster;
         const stackHolder = captureStackHolder(
           _PromisePoolCluster.prototype.execute
@@ -19507,7 +19507,7 @@ var require_promise = __commonJS({
         }
         return new this.Promise((resolve, reject) => {
           const done = makeDoneCb(resolve, reject, stackHolder);
-          corePoolCluster.execute(sql2, args, done);
+          corePoolCluster.execute(sql3, args, done);
         });
       }
       of(pattern, selector) {
@@ -40959,10 +40959,10 @@ var PgEnumColumn = class extends PgColumn {
 // node_modules/drizzle-orm/subquery.js
 var Subquery = class {
   static [entityKind] = "Subquery";
-  constructor(sql2, fields, alias, isWith = false, usedTables = []) {
+  constructor(sql3, fields, alias, isWith = false, usedTables = []) {
     this._ = {
       brand: "Subquery",
-      sql: sql2,
+      sql: sql3,
       selectedFields: fields,
       alias,
       isWith,
@@ -41360,19 +41360,19 @@ function sql(strings, ...params) {
   }
   return new SQL(queryChunks);
 }
-((sql2) => {
+((sql22) => {
   function empty() {
     return new SQL([]);
   }
-  sql2.empty = empty;
+  sql22.empty = empty;
   function fromList(list) {
     return new SQL(list);
   }
-  sql2.fromList = fromList;
+  sql22.fromList = fromList;
   function raw2(str) {
     return new SQL([new StringChunk(str)]);
   }
-  sql2.raw = raw2;
+  sql22.raw = raw2;
   function join2(chunks, separator) {
     const result = [];
     for (const [i, chunk] of chunks.entries()) {
@@ -41383,24 +41383,24 @@ function sql(strings, ...params) {
     }
     return new SQL(result);
   }
-  sql2.join = join2;
+  sql22.join = join2;
   function identifier(value) {
     return new Name(value);
   }
-  sql2.identifier = identifier;
+  sql22.identifier = identifier;
   function placeholder2(name2) {
     return new Placeholder(name2);
   }
-  sql2.placeholder = placeholder2;
+  sql22.placeholder = placeholder2;
   function param2(value, encoder2) {
     return new Param(value, encoder2);
   }
-  sql2.param = param2;
+  sql22.param = param2;
 })(sql || (sql = {}));
 ((SQL2) => {
   class Aliased {
-    constructor(sql2, fieldAlias) {
-      this.sql = sql2;
+    constructor(sql22, fieldAlias) {
+      this.sql = sql22;
       this.fieldAlias = fieldAlias;
     }
     static [entityKind] = "SQL.Aliased";
@@ -44200,8 +44200,8 @@ var MySqlDialect = class {
       generatedIds: generatedIdsResponse
     };
   }
-  sqlToQuery(sql2, invokeSource) {
-    return sql2.toQuery({
+  sqlToQuery(sql22, invokeSource) {
+    return sql22.toQuery({
       casing: this.casing,
       escapeName: this.escapeName,
       escapeParam: this.escapeParam,
@@ -45719,9 +45719,9 @@ var MySqlInsertBase = class extends QueryPromise {
     return rest;
   }
   prepare() {
-    const { sql: sql2, generatedIds } = this.dialect.buildInsertQuery(this.config);
+    const { sql: sql22, generatedIds } = this.dialect.buildInsertQuery(this.config);
     return this.session.prepareQuery(
-      this.dialect.sqlToQuery(sql2),
+      this.dialect.sqlToQuery(sql22),
       void 0,
       void 0,
       generatedIds,
@@ -46212,8 +46212,8 @@ var NoopCache = class extends Cache {
   async onMutate(_params) {
   }
 };
-async function hashQuery(sql2, params) {
-  const dataToHash = `${sql2}-${JSON.stringify(params)}`;
+async function hashQuery(sql3, params) {
+  const dataToHash = `${sql3}-${JSON.stringify(params)}`;
   const encoder2 = new TextEncoder();
   const data = encoder2.encode(dataToHash);
   const hashBuffer = await crypto.subtle.digest("SHA-256", data);
@@ -46316,8 +46316,8 @@ var MySqlSession = class {
       void 0
     ).execute();
   }
-  async count(sql2) {
-    const res = await this.execute(sql2);
+  async count(sql22) {
+    const res = await this.execute(sql22);
     return Number(
       res[0][0]["count"]
     );
@@ -48284,33 +48284,18 @@ var authRouter = createRouter({
 
 // api/product-router.ts
 var productRouter = createRouter({
-  list: publicQuery.input(
-    external_exports.object({
-      series: external_exports.string().optional(),
-      search: external_exports.string().optional(),
-      limit: external_exports.number().min(1).max(100).default(50),
-      offset: external_exports.number().min(0).default(0)
-    }).optional()
-  ).query(async ({ input }) => {
+  list: publicQuery.input(external_exports.object({
+    series: external_exports.string().optional(),
+    search: external_exports.string().optional(),
+    limit: external_exports.number().min(1).max(200).default(50),
+    offset: external_exports.number().min(0).default(0)
+  }).optional()).query(async ({ input }) => {
     const db = getDb();
-    const conditions = [];
-    if (input?.series) {
-      conditions.push(eq(products.series, input.series));
-    }
-    if (input?.search) {
-      conditions.push(like(products.title, `%${input.search}%`));
-    }
-    let query = db.select().from(products);
-    if (conditions.length > 0) {
-      query = query.where(conditions[0]);
-    }
-    const result = await query.limit(input?.limit || 50).offset(input?.offset || 0);
+    let query = db.select().from(products).orderBy(desc(products.createdAt));
+    if (input?.series) query = query.where(eq(products.series, input.series));
+    if (input?.search) query = db.select().from(products).where(like(products.title, `%${input.search}%`));
+    const result = await query.limit(input?.limit ?? 50).offset(input?.offset ?? 0);
     return result;
-  }),
-  byId: publicQuery.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
-    const db = getDb();
-    const result = await db.select().from(products).where(eq(products.id, input.id));
-    return result[0] || null;
   }),
   byHandle: publicQuery.input(external_exports.object({ handle: external_exports.string() })).query(async ({ input }) => {
     const db = getDb();
@@ -48319,18 +48304,29 @@ var productRouter = createRouter({
   }),
   series: publicQuery.query(async () => {
     const db = getDb();
-    const result = await db.select({
-      series: products.series,
-      count: sql`COUNT(*)`
-    }).from(products).groupBy(products.series);
+    const result = await db.select({ series: products.series, count: sql`COUNT(*)` }).from(products).groupBy(products.series);
     return result;
+  }),
+  adminList: adminQuery.input(external_exports.object({ search: external_exports.string().optional(), limit: external_exports.number().default(50), offset: external_exports.number().default(0) }).optional()).query(async ({ input }) => {
+    const db = getDb();
+    const total = await db.select({ count: sql`COUNT(*)` }).from(products);
+    let items;
+    if (input?.search) {
+      items = await db.select().from(products).where(like(products.title, `%${input.search}%`)).limit(input.limit).offset(input.offset);
+    } else {
+      items = await db.select().from(products).orderBy(desc(products.createdAt)).limit(input?.limit ?? 50).offset(input?.offset ?? 0);
+    }
+    return { items, total: Number(total[0]?.count ?? 0) };
+  }),
+  updatePrice: adminQuery.input(external_exports.object({ id: external_exports.number(), price: external_exports.string(), compareAtPrice: external_exports.string().optional() })).mutation(async ({ input }) => {
+    const db = getDb();
+    await db.update(products).set({ price: input.price, compareAtPrice: input.compareAtPrice }).where(eq(products.id, input.id));
+    return { success: true };
   }),
   seed: publicQuery.mutation(async () => {
     const db = getDb();
     const existing = await db.select({ count: sql`COUNT(*)` }).from(products);
-    if (existing[0].count > 0) {
-      return { message: "Products already seeded", count: existing[0].count };
-    }
+    if (Number(existing[0].count) > 0) return { message: "Already seeded", count: existing[0].count };
     const fs2 = await import("fs");
     const path2 = await import("path");
     const jsonPath = path2.resolve(process.cwd(), "public/products.json");
@@ -48338,22 +48334,20 @@ var productRouter = createRouter({
     const batchSize = 50;
     for (let i = 0; i < data.length; i += batchSize) {
       const batch = data.slice(i, i + batchSize);
-      await db.insert(products).values(
-        batch.map((p) => ({
-          handle: p.id,
-          title: p.title,
-          series: p.series || "Other",
-          description: p.description,
-          price: String(p.price),
-          compareAtPrice: String(p.compareAtPrice),
-          image: p.image,
-          badgeColor: p.badgeColor,
-          tags: p.tags?.join(", ") || "",
-          models: p.models?.join(", ") || ""
-        }))
-      );
+      await db.insert(products).values(batch.map((p) => ({
+        handle: p.id,
+        title: p.title,
+        series: p.series || "Other",
+        description: p.description,
+        price: String(p.price),
+        compareAtPrice: String(p.compareAtPrice),
+        image: p.image,
+        badgeColor: p.badgeColor,
+        tags: p.tags?.join(", ") || "",
+        models: p.models?.join(", ") || ""
+      })));
     }
-    return { message: "Products seeded successfully", count: data.length };
+    return { message: "Seeded", count: data.length };
   })
 });
 
@@ -48426,28 +48420,24 @@ var cartRouter = createRouter({
 
 // api/order-router.ts
 var orderRouter = createRouter({
-  create: publicQuery.input(
-    external_exports.object({
-      customerName: external_exports.string().min(2),
-      customerEmail: external_exports.string().email(),
-      customerPhone: external_exports.string().optional(),
-      shippingAddress: external_exports.string().min(5),
-      city: external_exports.string().min(2),
-      postalCode: external_exports.string().optional(),
-      totalAmount: external_exports.number().positive(),
-      items: external_exports.array(
-        external_exports.object({
-          productId: external_exports.number(),
-          title: external_exports.string(),
-          price: external_exports.number(),
-          quantity: external_exports.number(),
-          model: external_exports.string(),
-          image: external_exports.string().optional()
-        })
-      ),
-      notes: external_exports.string().optional()
-    })
-  ).mutation(async ({ input }) => {
+  create: publicQuery.input(external_exports.object({
+    customerName: external_exports.string().min(2),
+    customerEmail: external_exports.string().email(),
+    customerPhone: external_exports.string().optional(),
+    shippingAddress: external_exports.string().min(5),
+    city: external_exports.string().min(2),
+    postalCode: external_exports.string().optional(),
+    totalAmount: external_exports.number().positive(),
+    items: external_exports.array(external_exports.object({
+      productId: external_exports.number(),
+      title: external_exports.string(),
+      price: external_exports.number(),
+      quantity: external_exports.number(),
+      model: external_exports.string(),
+      image: external_exports.string().optional()
+    })),
+    notes: external_exports.string().optional()
+  })).mutation(async ({ input }) => {
     const db = getDb();
     const orderNumber = `CV${Date.now().toString(36).toUpperCase()}`;
     await db.insert(orders).values({
@@ -48465,36 +48455,99 @@ var orderRouter = createRouter({
     });
     return { success: true, orderNumber };
   }),
-  list: adminQuery.query(async () => {
+  list: adminQuery.input(external_exports.object({
+    status: external_exports.enum(["all", "pending", "processing", "shipped", "delivered", "cancelled"]).default("all"),
+    search: external_exports.string().optional(),
+    limit: external_exports.number().default(50),
+    offset: external_exports.number().default(0)
+  }).optional()).query(async ({ input }) => {
     const db = getDb();
-    const result = await db.select().from(orders).orderBy(desc(orders.createdAt));
-    return result;
+    let query = db.select().from(orders).orderBy(desc(orders.createdAt));
+    const result = await query.limit(input?.limit ?? 50).offset(input?.offset ?? 0);
+    let filtered = result;
+    if (input?.status && input.status !== "all") {
+      filtered = filtered.filter((o) => o.status === input.status);
+    }
+    if (input?.search) {
+      const s = input.search.toLowerCase();
+      filtered = filtered.filter(
+        (o) => o.customerName.toLowerCase().includes(s) || o.orderNumber.toLowerCase().includes(s) || o.customerEmail.toLowerCase().includes(s)
+      );
+    }
+    return filtered;
   }),
   byId: adminQuery.input(external_exports.object({ id: external_exports.number() })).query(async ({ input }) => {
     const db = getDb();
     const result = await db.select().from(orders).where(eq(orders.id, input.id));
     return result[0] || null;
   }),
-  updateStatus: adminQuery.input(
-    external_exports.object({
-      id: external_exports.number(),
-      status: external_exports.enum(["pending", "processing", "shipped", "delivered", "cancelled"])
-    })
-  ).mutation(async ({ input }) => {
+  updateStatus: adminQuery.input(external_exports.object({
+    id: external_exports.number(),
+    status: external_exports.enum(["pending", "processing", "shipped", "delivered", "cancelled"])
+  })).mutation(async ({ input }) => {
     const db = getDb();
-    await db.update(orders).set({ status: input.status }).where(eq(orders.id, input.id));
+    await db.update(orders).set({ status: input.status, updatedAt: /* @__PURE__ */ new Date() }).where(eq(orders.id, input.id));
     return { success: true };
   }),
   stats: adminQuery.query(async () => {
     const db = getDb();
-    const totalOrders = await db.select({ count: sql`COUNT(*)` }).from(orders);
-    const totalRevenue = await db.select({ total: sql`SUM(CAST(totalAmount AS DECIMAL(10,2)))` }).from(orders);
-    const pendingOrders = await db.select({ count: sql`COUNT(*)` }).from(orders).where(eq(orders.status, "pending"));
-    return {
-      totalOrders: totalOrders[0]?.count || 0,
-      totalRevenue: totalRevenue[0]?.total || 0,
-      pendingOrders: pendingOrders[0]?.count || 0
+    const now = /* @__PURE__ */ new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+    const [allOrders, monthOrders, lastMonthOrders, pendingOrders, customerCount] = await Promise.all([
+      db.select({ count: sql`COUNT(*)`, total: sql`SUM(CAST(totalAmount AS DECIMAL(10,2)))` }).from(orders),
+      db.select({ count: sql`COUNT(*)`, total: sql`SUM(CAST(totalAmount AS DECIMAL(10,2)))` }).from(orders).where(gte(orders.createdAt, startOfMonth)),
+      db.select({ count: sql`COUNT(*)`, total: sql`SUM(CAST(totalAmount AS DECIMAL(10,2)))` }).from(orders).where(and(gte(orders.createdAt, startOfLastMonth), sql`${orders.createdAt} <= ${endOfLastMonth}`)),
+      db.select({ count: sql`COUNT(*)` }).from(orders).where(eq(orders.status, "pending")),
+      db.select({ count: sql`COUNT(*)` }).from(users)
+    ]);
+    const thisMonthRevenue = Number(monthOrders[0]?.total ?? 0);
+    const lastMonthRevenue = Number(lastMonthOrders[0]?.total ?? 0);
+    const revenueGrowth = lastMonthRevenue > 0 ? (thisMonthRevenue - lastMonthRevenue) / lastMonthRevenue * 100 : 0;
+    const recentOrders = await db.select().from(orders).orderBy(desc(orders.createdAt)).limit(100);
+    const last7Days = Array.from({ length: 7 }, (_, i) => {
+      const d = /* @__PURE__ */ new Date();
+      d.setDate(d.getDate() - (6 - i));
+      return d.toISOString().split("T")[0];
+    });
+    const salesByDay = last7Days.map((day2) => ({
+      date: day2,
+      orders: recentOrders.filter((o) => o.createdAt.toISOString().split("T")[0] === day2).length,
+      revenue: recentOrders.filter((o) => o.createdAt.toISOString().split("T")[0] === day2).reduce((s, o) => s + Number(o.totalAmount), 0)
+    }));
+    const byStatus = {
+      pending: recentOrders.filter((o) => o.status === "pending").length,
+      processing: recentOrders.filter((o) => o.status === "processing").length,
+      shipped: recentOrders.filter((o) => o.status === "shipped").length,
+      delivered: recentOrders.filter((o) => o.status === "delivered").length,
+      cancelled: recentOrders.filter((o) => o.status === "cancelled").length
     };
+    return {
+      totalOrders: Number(allOrders[0]?.count ?? 0),
+      totalRevenue: Number(allOrders[0]?.total ?? 0),
+      monthOrders: Number(monthOrders[0]?.count ?? 0),
+      monthRevenue: thisMonthRevenue,
+      revenueGrowth: Math.round(revenueGrowth * 10) / 10,
+      pendingOrders: Number(pendingOrders[0]?.count ?? 0),
+      totalCustomers: Number(customerCount[0]?.count ?? 0),
+      salesByDay,
+      byStatus
+    };
+  })
+});
+
+// api/admin-router.ts
+var adminRouter = createRouter({
+  customers: adminQuery.query(async () => {
+    const db = getDb();
+    const result = await db.select({ id: users.id, email: users.email, name: users.name, role: users.role, createdAt: users.createdAt, lastSignInAt: users.lastSignInAt }).from(users).orderBy(desc(users.createdAt));
+    return result;
+  }),
+  setRole: adminQuery.input(external_exports.object({ userId: external_exports.number(), role: external_exports.enum(["user", "admin"]) })).mutation(async ({ input }) => {
+    const db = getDb();
+    await db.update(users).set({ role: input.role }).where(eq(users.id, input.userId));
+    return { success: true };
   })
 });
 
@@ -48504,7 +48557,8 @@ var appRouter = createRouter({
   auth: authRouter,
   product: productRouter,
   cart: cartRouter,
-  order: orderRouter
+  order: orderRouter,
+  admin: adminRouter
 });
 
 // api/context.ts
