@@ -5,6 +5,7 @@ import ProductPage from "@/pages/ProductPage";
 import CartPage from "@/pages/CartPage";
 import CheckoutPage from "@/pages/CheckoutPage";
 import AdminDashboard from "@/pages/AdminDashboard";
+import Login from "@/pages/Login";
 import NotFound from "@/pages/NotFound";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
         <Route path="/sepet" element={<CartPage />} />
         <Route path="/odeme" element={<CheckoutPage />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/login" element={<Login />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </CartProvider>

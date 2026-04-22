@@ -1,14 +1,13 @@
 export const Session = {
-  cookieName: "kimi_sid",
+  cookieName: "app_sid",
   maxAgeMs: 365 * 24 * 60 * 60 * 1000,
 } as const;
 
 export const ErrorMessages = {
-  unauthenticated: "Authentication required",
-  insufficientRole: "Insufficient permissions",
+  unauthenticated: "Giriş yapmanız gerekiyor",
+  insufficientRole: "Bu işlem için yetkiniz yok",
 } as const;
 
 export const Paths = {
   login: "/login",
-  oauthCallback: "/api/oauth/callback",
 } as const;
