@@ -1,5 +1,6 @@
 import { Routes, Route } from "react-router";
 import { CartProvider } from "@/hooks/useCart";
+import CartDrawer from "@/components/CartDrawer";
 import HomePage from "@/pages/HomePage";
 import ProductPage from "@/pages/ProductPage";
 import CartPage from "@/pages/CartPage";
@@ -11,6 +12,7 @@ import NotFound from "@/pages/NotFound";
 function App() {
   return (
     <CartProvider>
+      <CartDrawer />
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/urun/:handle" element={<ProductPage />} />
